@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 项目特定
+pretrained_models/
+outputs/
+temp/
+cache/
+input/
+output/
+logs/
+history/
+
+*.wav
+*.mp3
+*.log
+config.json
+role_config.json
+
+# 模型文件
+*.pth
+*.onnx
+*.pt
+*.bin
+*.safetensors
+
+# 数据库
+*.db
+*.sqlite3
