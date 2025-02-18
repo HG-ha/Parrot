@@ -36,6 +36,10 @@
         # 安装其他依赖
         pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
         ```
+3. **运行**
+    ```bash
+    python main.py
+    ```
 
 ### 模型获取
 

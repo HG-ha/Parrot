@@ -36,6 +36,10 @@ Multi-role voice cloning project based on CosyVoice2-0.5B.
         # Install other dependencies
         pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
         ```
+3. **Run**
+    ```bash
+    python main.py
+    ```
 
 ### Model Download
 
