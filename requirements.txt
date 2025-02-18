@@ -15,7 +15,8 @@ matplotlib==3.7.5
 modelscope==1.15.0
 omegaconf==2.3.0
 onnx==1.16.0
-onnxruntime-gpu==1.18.0
+onnxruntime-gpu==1.18.0; sys_platform == 'linux'
+onnxruntime==1.18.0; sys_platform == 'darwin' or sys_platform == 'windows'
 rich==13.7.1
 soundfile==0.12.1
 tensorboard==2.14.0
