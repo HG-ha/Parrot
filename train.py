@@ -10,7 +10,8 @@ import requests
 import uuid
 import mlog
 from pydub import AudioSegment
-
+from static_ffmpeg import add_paths
+add_paths()
 
 def clear_cache():
     input_files = glob.glob('input/*')
