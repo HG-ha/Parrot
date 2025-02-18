@@ -13,6 +13,7 @@ from pydub import AudioSegment
 from static_ffmpeg import add_paths
 add_paths()
 
+
 def clear_cache():
     input_files = glob.glob('input/*')
     output_files = glob.glob('output/*')
@@ -62,12 +63,12 @@ class CosyVoiceWrapper:
                 torchaudio.save(file_path, j['tts_speech'], self.cosyvoice.sample_rate)
                 files.append(file_path)
                 
-                combined = AudioSegment.empty()
-                for file in files:
-                    combined += AudioSegment.from_wav(file)
-                
-                combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
-                combined.export(combined_file_path, format='wav')
+            combined = AudioSegment.empty()
+            for file in files:
+                combined += AudioSegment.from_wav(file)
+            
+            combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
+            combined.export(combined_file_path, format='wav')
                 
             return True, combined_file_path
         except Exception as e:
@@ -92,12 +93,12 @@ class CosyVoiceWrapper:
                 torchaudio.save(file_path, j['tts_speech'], self.cosyvoice.sample_rate)
                 files.append(file_path)
                 
-                combined = AudioSegment.empty()
-                for file in files:
-                    combined += AudioSegment.from_wav(file)
-                
-                combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
-                combined.export(combined_file_path, format='wav')
+            combined = AudioSegment.empty()
+            for file in files:
+                combined += AudioSegment.from_wav(file)
+            
+            combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
+            combined.export(combined_file_path, format='wav')
                 
             return True, combined_file_path
         except Exception as e:
@@ -122,12 +123,12 @@ class CosyVoiceWrapper:
                 torchaudio.save(file_path, j['tts_speech'], self.cosyvoice.sample_rate)
                 files.append(file_path)
                 
-                combined = AudioSegment.empty()
-                for file in files:
-                    combined += AudioSegment.from_wav(file)
-                
-                combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
-                combined.export(combined_file_path, format='wav')
+            combined = AudioSegment.empty()
+            for file in files:
+                combined += AudioSegment.from_wav(file)
+            
+            combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
+            combined.export(combined_file_path, format='wav')
                 
             return True, combined_file_path
         except Exception as e:
@@ -148,13 +149,3 @@ class CosyVoiceWrapper:
         if self.cosyvoice is not None:
             return True
         return False
-
-
-if __name__ == '__main__':
-    # 使用示例
-    cosyvoice_wrapper = CosyVoiceWrapper('pretrained_models/CosyVoice2-0.5B', load_jit=False, load_trt=False, fp16=False)
-
-    # cosyvoice_wrapper.inference_zero_shot('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。', '还有，比我早到的人', 'CURE人物说话-中文 (13)_爱给网_aigei_com.wav', speed=1.0, stream=False)
-    # cosyvoice_wrapper.inference_cross_lingual('在他讲述那个荒诞故事的过程中，他突然[laughter]停下来，因为他自己也被逗笑了[laughter]。', 'CURE人物说话-中文 (13)_爱给网_aigei_com.wav', speed=1.0, stream=False)
-    # cosyvoice_wrapper.inference_instruct('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。',
-    #                                       '用四川话说这句话', '农-孙悟空1.mp3', speed=1.0, stream=False)
