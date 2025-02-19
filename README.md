@@ -56,14 +56,26 @@ snapshot_download('iic/CosyVoice2-0.5B', local_dir='pretrained_models/CosyVoice2
 
 ## 界面展示
 
-### 主页
-![主页界面](./asset/Home.png)
+### 主页面
+<div align="center">
+  <img src="./asset/Home.png" alt="主页界面" width="800"/>
+  <p><em>主页界面 - 提供语音克隆核心功能和角色切换</em></p>
+</div>
 
 ### 历史记录
-![历史记录](./asset/history.png)
+<div align="center">
+  <img src="./asset/history.png" alt="历史记录" width="800"/>
+  <p><em>历史记录页面 - 查看和复用以往的语音克隆参数</em></p>
+</div>
 
 ### 角色管理
-![角色管理](./asset/role.png)
+<div align="center">
+  <img src="./asset/role.png" alt="角色管理" width="800"/>
+  <p><em>角色管理界面 - 添加、编辑和管理预设角色</em></p>
+</div>
 
-### 系统设置
-![系统设置](./asset/setting.png)
+### 系统配置
+<div align="center">
+  <img src="./asset/setting.png" alt="系统设置" width="800"/>
+  <p><em>设置界面 - 调整系统参数和模型配置</em></p>
+</div>

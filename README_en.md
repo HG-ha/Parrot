@@ -56,14 +56,26 @@ snapshot_download('iic/CosyVoice2-0.5B', local_dir='pretrained_models/CosyVoice2
 
 ## Interface Preview
 
-### Home
-![Home Interface](./asset/Home.png)
+### Main Interface
+<div align="center">
+  <img src="./asset/Home.png" alt="Home Interface" width="800"/>
+  <p><em>Home Interface - Core voice cloning functionality and role switching</em></p>
+</div>
 
-### History
-![History Records](./asset/history.png)
+### History Management
+<div align="center">
+  <img src="./asset/history.png" alt="History Records" width="800"/>
+  <p><em>History Page - View and reuse previous voice cloning parameters</em></p>
+</div>
 
 ### Role Management
-![Role Management](./asset/role.png)
+<div align="center">
+  <img src="./asset/role.png" alt="Role Management" width="800"/>
+  <p><em>Role Management Interface - Add, edit and manage preset characters</em></p>
+</div>
 
-### Settings
-![System Settings](./asset/setting.png)
+### System Configuration
+<div align="center">
+  <img src="./asset/setting.png" alt="System Settings" width="800"/>
+  <p><em>Settings Interface - Adjust system parameters and model configuration</em></p>
+</div>
