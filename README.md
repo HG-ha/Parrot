@@ -38,7 +38,11 @@
         ```
 3. **运行**
     ```bash
-    python main.py
+    # 在桌面运行
+    flet run
+
+    # 在web中运行
+    flet run --web main.py
     ```
 
 ### 模型获取

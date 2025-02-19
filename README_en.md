@@ -38,7 +38,11 @@ Multi-role voice cloning project based on CosyVoice2-0.5B.
         ```
 3. **Run**
     ```bash
-    python main.py
+    # Running on desktop
+    flet run
+
+    # Run in the browser
+    flet run --web main.py
     ```
 
 ### Model Download
