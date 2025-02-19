@@ -75,7 +75,7 @@ class CosyVoiceWrapper:
             return False, str(e)
 
     # 快速推理，直接根据文本内容生成音频
-    def inference_cross_lingual(self, text, prompt_speech_path_or_url, output_path='output', speed=1.0, stream=False):
+    def inference_cross_lingual(self, text, prompt_speech_path_or_url, output_path='output', speed=1.0, stream=False, progress_callback=None):
         try:
             if prompt_speech_path_or_url.startswith('http'):
                 success, prompt_speech_path = download_file(prompt_speech_path_or_url)
@@ -87,19 +87,29 @@ class CosyVoiceWrapper:
             prompt_speech = load_wav(prompt_speech_path, 16000)
             os.makedirs(output_path, exist_ok=True)
             files = []
-            for i, j in enumerate(self.cosyvoice.inference_cross_lingual(text, prompt_speech, speed=speed, stream=stream)):
+            
+            # 获取文本分段数量
+            text_segments = list(self.cosyvoice.frontend.text_normalize(text, split=True))
+            num_segments = len(text_segments)
+            
+            for i, segment in enumerate(self.cosyvoice.inference_cross_lingual(text, prompt_speech, speed=speed, stream=stream)):
                 file_name = f'fine_grained_control_{uuid.uuid4()}.wav'
                 file_path = os.path.join(output_path, file_name)
-                torchaudio.save(file_path, j['tts_speech'], self.cosyvoice.sample_rate)
+                torchaudio.save(file_path, segment['tts_speech'], self.cosyvoice.sample_rate)
                 files.append(file_path)
                 
+                # 计算进度并回调
+                progress = (i + 1) / num_segments * 100
+                if progress_callback:
+                    progress_callback(progress)
+
             combined = AudioSegment.empty()
             for file in files:
                 combined += AudioSegment.from_wav(file)
             
             combined_file_path = os.path.join(output_path, f'combined_{uuid.uuid4()}.wav')
             combined.export(combined_file_path, format='wav')
-                
+
             return True, combined_file_path
         except Exception as e:
             return False, str(e)

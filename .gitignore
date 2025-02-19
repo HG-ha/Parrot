@@ -44,6 +44,9 @@ input/
 output/
 logs/
 history/
+config/history.json
+config/settings.json
+
 
 *.wav
 *.mp3

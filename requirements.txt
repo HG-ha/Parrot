@@ -32,3 +32,4 @@ flet==0.26.0
 pygame==2.6.1
 pydub==0.25.1
 static-ffmpeg==2.8
+flet-cli==0.26.0

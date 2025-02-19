@@ -82,7 +82,7 @@ def is_model_downloaded():
     return os.path.exists('pretrained_models/CosyVoice2-0.5B')
 
 # 应用名
-app_name = "CosyVoice2.0 - 0.5B"
+app_name = "CosyVoice2 - 0.5B"
 
 # Flet应用程序
 def main(page: ft.Page):
@@ -90,11 +90,22 @@ def main(page: ft.Page):
     page.window.title_bar_hidden = True
     page.window.frameless = True
     page.window.title_bar_buttons_hidden = True
-
+    
+    # 新增：设置窗口背景色为透明
+    page.window.bgcolor = ft.colors.TRANSPARENT
+    
+    # 修改页面基础属性
     page.title = app_name
     page.padding = 0
+    page.bgcolor = ft.colors.TRANSPARENT  # 新增：设置页面背景为透明
     page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
     page.vertical_alignment = ft.MainAxisAlignment.START
+
+    # 设置字体
+    page.fonts = {
+        "syht_light": "fonts/SourceHanSansSC-Light-2.otf",  # 自定义字体路径
+    }
+    page.theme = ft.Theme(font_family="syht_light")  # 设置默认字体
 
     # 创建自定义标题栏
     def close_window(e):
@@ -110,29 +121,29 @@ def main(page: ft.Page):
                 ft.WindowDragArea(
                     ft.Row(
                         [
-                            ft.Icon(ft.Icons.AUTO_AWESOME, size=20),  # 修改：使用 Icons
+                            ft.Icon(ft.Icons.AUTO_AWESOME, size=20),
                             ft.Text(app_name, size=16, weight=ft.FontWeight.BOLD),
                         ],
                     ),
                     expand=True,
                 ),
                 ft.IconButton(
-                    icon=ft.Icons.REMOVE,  # 修改：使用 Icons
+                    icon=ft.Icons.REMOVE,
                     tooltip="最小化",
-                    icon_color=ft.Colors.GREY_700,  # 修改：使用 Colors
+                    icon_color=ft.Colors.GREY_700,
                     on_click=minimize_window
                 ),
                 ft.IconButton(
-                    icon=ft.Icons.CLOSE,  # 修改：使用 Icons
+                    icon=ft.Icons.CLOSE,
                     tooltip="关闭",
-                    icon_color=ft.Colors.GREY_700,  # 修改：使用 Colors
+                    icon_color=ft.Colors.GREY_700,
                     on_click=close_window
                 ),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
         ),
         padding=ft.padding.only(left=15, right=10, top=5, bottom=5),
-        bgcolor=ft.Colors.SURFACE,  # 修改：使用 Colors
+        bgcolor=ft.Colors.SURFACE,
     )
 
     # 修改 set_theme_mode 函数，增加按钮更新
@@ -142,6 +153,9 @@ def main(page: ft.Page):
         # 确定当前应该使用的主题（light或dark）
         is_light = (mode == "light" or 
                    (mode == "system" and page.platform_brightness == ft.Brightness.LIGHT))
+        
+        # 更新主容器背景色
+        main_container.bgcolor = ft.colors.GREY_50 if is_light else ft.colors.GREY_900
         
         # 设置菜单容器背景色
         menu_container.bgcolor = ft.colors.GREY_50 if is_light else ft.colors.GREY_900
@@ -198,6 +212,7 @@ def main(page: ft.Page):
     # 添加标题栏模型状态
     def update_title():
         page.title = f"{app_name} - {'模型已加载' if cosyvoice_wrapper else '模型未加载'}"
+        title_bar.content.controls[0].content.controls[1].value = f"{app_name} - {'模型已加载' if cosyvoice_wrapper else '模型未加载'}"
         page.update()
 
     # 加载历史记录、设置和音频角色
@@ -217,9 +232,9 @@ def main(page: ft.Page):
                     padding=15,
                     shape=ft.RoundedRectangleBorder(radius=10),
                     # 根据主题设置按钮颜色
-                    bgcolor=ft.Colors.GREY_100 if is_light else ft.Colors.GREY_800,  # 修改：使用 Colors
+                    bgcolor=ft.Colors.GREY_100 if is_light else ft.Colors.GREY_800,
                     # bgcolor=ft.colors.BLACK if is_light else ft.colors.WHITE,
-                    color=ft.Colors.BLACK if is_light else ft.Colors.WHITE,  # 修改：使用 Colors
+                    color=ft.Colors.BLACK if is_light else ft.Colors.WHITE,
                 ),
             ),
             margin=ft.margin.only(bottom=5),
@@ -288,7 +303,7 @@ def main(page: ft.Page):
             return [lst[i:i+n] for i in range(0, len(lst), n)]
         rows = [ft.Row(controls=chunk, spacing=10) for chunk in chunk_list(role_buttons, 3)]
         # 将所有行组合成一个 Column
-        select_role_dialog.content = ft.Column(controls=rows, spacing=10)
+        select_role_dialog.content = ft.Column(controls=rows, spacing=10, height=min(page.height * 0.6, len(rows) * 50))
         select_role_dialog.open = True
         page.update()
     
@@ -328,8 +343,17 @@ def main(page: ft.Page):
 
     def generate_audio(e):
         if cosyvoice_wrapper is None:
-            output_text.value = "模型尚未加载，请先加载模型。"
-            page.update()
+            # 显示对话框提示用户先加载模型
+            no_model_dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("提示"),
+                content=ft.Text("模型尚未加载，请先加载模型。"),
+                actions=[
+                    ft.TextButton("确定", on_click=lambda _: page.close(no_model_dialog))
+                ],
+            )
+            page.dialog = no_model_dialog
+            page.open(no_model_dialog)
             return
 
         text = text_input.value
@@ -337,7 +361,36 @@ def main(page: ft.Page):
         prompt = prompt_input.value
         speed = speed_input.value
 
-        success, file_path = cosyvoice_wrapper.inference_cross_lingual(text, prompt, speed=speed)
+        # 创建进度对话框
+        progress_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("生成音频"),
+            content=ft.Container(
+                content=ft.Column([
+                    ft.ProgressBar(width=200, value=0),
+                    ft.Text("生成进度: 0%", text_align=ft.TextAlign.CENTER),
+                ], 
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=20,  # 添加间距
+                tight=True,  # 使Column紧凑显示
+                ),
+                padding=20, 
+            ),
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.dialog = progress_dialog
+        page.open(progress_dialog)
+
+        # 定义进度回调函数
+        def update_progress(progress):
+            progress_dialog.content.content.controls[0].value = progress / 100
+            progress_dialog.content.content.controls[1].value = f"生成进度: {progress:.1f}%"
+            page.update()
+
+        # 将回调函数传递给 inference_cross_lingual
+        success, file_path = cosyvoice_wrapper.inference_cross_lingual(text, prompt, speed=speed, progress_callback=update_progress)
+    
+
         if success:
             # 移动文件到history目录
             new_file_path = os.path.join(path_manager.history_dir, os.path.basename(file_path))
@@ -353,6 +406,7 @@ def main(page: ft.Page):
                 'timestamp': timestamp
             }
             output_text.value = f"生成成功: {new_file_path}"
+            page.close(progress_dialog)
             update_history(history_record)
         else:
             output_text.value = f"生成失败: {file_path}"
@@ -423,25 +477,25 @@ def main(page: ft.Page):
                                 clone_row,
                                 speed_input,
                                 speed_value_text,
-                                output_text,
-                                ft.Row(
-                                    [generate_button, clear_button],
-                                    alignment=ft.MainAxisAlignment.END,
-                                    spacing=10
-                                )
+                                output_text
                             ],
                             scroll=ft.ScrollMode.AUTO,  # 添加滚动功能
                             spacing=20,  # 增加组件间距
                         ),
                         expand=True,  # 允许容器扩展
+                    ),
+                    ft.Row(
+                        [generate_button, clear_button],
+                        alignment=ft.MainAxisAlignment.END,
+                        spacing=10
                     )
                 ],
                 expand=True,  # 允许列扩展
             ),
             padding=20,
-            expand=True,  # 允许容器扩展
+            expand=True  # 允许容器扩展
         ),
-        expand=True,  # 允许卡片扩展
+        expand=True  # 允许卡片扩展
     )
 
     # 生成记录界面
@@ -530,6 +584,7 @@ def main(page: ft.Page):
             speaker_input.value = item['speaker']
             prompt_input.value = item['reference']
             speed_input.value = item['speed']
+            speed_input.label = f"{item['speed']:.1f}"  # 更新滑块标签
             speed_value_text.value = f"当前速度: {item['speed']:.1f}"
             show_page("clone")
             page.update()
@@ -546,7 +601,7 @@ def main(page: ft.Page):
                         mlog.info(f"成功删除音频文件: {item['file_path']}")
                     except Exception as ex:
                         mlog.error(f"删除音频文件失败: {str(ex)}")
-
+            
                 history.remove(item)
                 save_history(history)
                 history_list.controls.remove(container)
@@ -703,7 +758,7 @@ def main(page: ft.Page):
 
     model_status = ft.Text(
         value="模型状态：" + ("已下载" if is_model_downloaded() else "未下载"),
-        color=ft.Colors.GREEN if is_model_downloaded() else ft.Colors.RED  # 修改：使用 Colors
+        color=ft.Colors.GREEN if is_model_downloaded() else ft.Colors.RED
     )
 
     settings_output_text = ft.Text()  # 设置界面专用的输出文本
@@ -716,14 +771,19 @@ def main(page: ft.Page):
         loading_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("加载模型"),
-            content=ft.Column([
-                ft.ProgressRing(),
-                ft.Text("正在加载模型，请稍候...", text_align=ft.TextAlign.CENTER),
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            height = page.height * 0.2
+            content=ft.Container(
+                content=ft.Column(
+                    [
+                        ft.ProgressRing(),
+                        ft.Text("正在加载模型，请稍候...", text_align=ft.TextAlign.CENTER),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=20,  # 添加间距
+                    tight=True,  # 使Column紧凑显示
+                ),
+                padding=20,  # 添加内边距
             ),
-            
+            actions_alignment=ft.MainAxisAlignment.END,
         )
         page.dialog = loading_dialog
         page.open(loading_dialog)
@@ -760,25 +820,52 @@ def main(page: ft.Page):
     # 定义加载模型按钮
     load_model_button = ft.ElevatedButton(
         text="加载模型",
-        on_click=load_model_button_click,
+        on_click=lambda e: asyncio.run(load_model_button_click(e)),
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
     )
 
-    def save_settings_button_click(e):
+    # 修改设置界面回调函数，使其在设置变更时自动保存
+    def auto_save_settings():
         settings['auto_load_model'] = auto_load_model_checkbox.value
-        is_light = (theme_mode_dropdown.value == "light" or 
-                   (theme_mode_dropdown.value == "system" and page.platform_brightness == ft.Brightness.LIGHT))
         settings['theme_mode'] = theme_mode_dropdown.value
         settings['device'] = device_dropdown.value
         save_settings(settings)
-        set_theme_mode("light" if is_light else "dark")
-        settings_output_text.value = "设置已保存。"
+        settings_output_text.value = "设置已自动保存。"
         page.update()
 
-    save_settings_button = ft.ElevatedButton(
-        text="保存设置",
-        on_click=save_settings_button_click,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
+    # 修改复选框的回调
+    auto_load_model_checkbox = ft.Checkbox(
+        label="启动时自动加载模型", 
+        value=settings['auto_load_model'],
+        on_change=lambda _: auto_save_settings()
+    )
+
+    # 修改主题下拉框的回调
+    theme_mode_dropdown = ft.Dropdown(
+        label="主题模式",
+        value=settings.get('theme_mode', 'system'),
+        options=[
+            ft.dropdown.Option("system", "跟随系统"),
+            ft.dropdown.Option("light", "浅色模式"),
+            ft.dropdown.Option("dark", "深色模式"),
+        ],
+        width=200,
+        on_change=lambda e: (
+            auto_save_settings(),
+            set_theme_mode(e.control.value)
+        )
+    )
+
+    # 修改设备选择下拉框的回调
+    device_dropdown = ft.Dropdown(
+        label="设备选择",
+        value=settings.get('device', 'cpu'),
+        options=[
+            ft.dropdown.Option("cpu", "CPU"),
+            ft.dropdown.Option("cuda", "CUDA (GPU)"),
+        ],
+        width=200,
+        on_change=lambda _: auto_save_settings()
     )
 
     # 修改下载模型按钮点击逻辑
@@ -877,16 +964,15 @@ def main(page: ft.Page):
                 ft.Text("缓存管理", size=20, weight=ft.FontWeight.BOLD),
                 clear_cache_button,
                 ft.Divider(),
-                ft.Row(
-                    controls=[save_settings_button],
-                    alignment=ft.MainAxisAlignment.END
-                ),
                 settings_output_text
-            ]),
-            padding=20
+            ],
+            spacing=20,  # 增加间距使布局更加均匀
         ),
+        padding=20,
         expand=True
-    )
+    ),
+    expand=True
+)
 
     # 音频角色管理界面 - 修复删除逻辑
     def create_role_item(role):
@@ -947,12 +1033,12 @@ def main(page: ft.Page):
                     expand=True
                     ),
                     ft.IconButton(
-                        icon=ft.Icons.EDIT,  # 修改：使用 Icons 代替 icons
+                        icon=ft.Icons.EDIT,
                         tooltip="编辑角色",
                         on_click=edit_role_click
                     ),
                     ft.IconButton(
-                        icon=ft.Icons.DELETE,  # 修改：使用 Icons 代替 icons
+                        icon=ft.Icons.DELETE,
                         tooltip="删除角色",
                         on_click=delete_role_click
                     ),
@@ -1043,7 +1129,7 @@ def main(page: ft.Page):
                     ]),
                     padding=ft.padding.only(top=10)
                 )
-            ]),
+            ], height=min(page.height * 0.6, 300)),  # 设置最大高度
             width=400,
         ),
         actions=[
@@ -1106,7 +1192,7 @@ def main(page: ft.Page):
                     ]),
                     padding=ft.padding.only(top=10)
                 )
-            ]),
+            ], height=min(page.height * 0.6, 300)),  # 设置最大高度
             width=400,
         ),
         actions=[
@@ -1191,56 +1277,74 @@ def main(page: ft.Page):
     # 默认显示语音克隆界面
     show_page("clone")
 
-    # 修改 menu_container 布局
+    # 修改菜单容器布局
     menu_container = ft.Container(
-        content=ft.Column([
-            menu_items,
-            settings_button
-        ]),
-        width=200,
-        height=page.height* 0.95,
-        padding=20,  # 增加内边距使布局更加宽松
+        content=ft.Column(
+            [
+                menu_items,
+                settings_button
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # 在顶部和底部之间均匀分布
+            expand=True
+        ),
+        width=page.width * 0.2,  # 设置为窗口宽度的20%
+        padding=20,
         bgcolor=ft.colors.GREY_100,
-        border_radius=20,  # 添加圆角效果
-        margin=15,  # 添加外边距,与边缘保持一定距离
+        border_radius=20,
+        margin=15,
     )
 
-    # 相应的主布局也需要调整
-    page.add(
-        ft.Container(
-            ft.Column(
-                [
-                    title_bar,
-                    ft.Row(
-                        [
-                            menu_container,
-                            ft.VerticalDivider(opacity=0.8),  # 降低分割线透明度
-                            ft.Container(
-                                content=ft.Column([content_container]),
-                                expand=True,
-                                padding=10
-                            )
-                        ],
-                        expand=True,
-                        spacing=0,
-                    )
-                ],
-                spacing=0,
-                expand=True,
-            ),
-            border_radius=20,
-        )
+    # 修改主布局容器
+    main_container = ft.Container(
+        ft.Column(
+            [
+                title_bar,
+                ft.Row(
+                    [
+                        menu_container,
+                        ft.VerticalDivider(opacity=0.8),
+                        ft.Container(
+                            content=ft.Column([content_container]),
+                            expand=True,
+                            padding=10
+                        )
+                    ],
+                    expand=True,
+                    spacing=0,
+                ),
+            ],
+            spacing=0,
+            expand=True,
+        ),
+        expand=True,
+        border_radius=20,  # 设置圆角
+        # 新增：设置背景色（根据主题动态设置）
+        bgcolor=ft.colors.GREY_50 if (
+            page.theme_mode == "light" or 
+            (page.theme_mode == "system" and page.platform_brightness == ft.Brightness.LIGHT)
+        ) else ft.colors.GREY_900,
     )
+
+    # 将主容器添加到页面
+    page.add(main_container)
+
+    # 添加窗口大小改变事件处理
+    def page_resize(e):
+        # 更新菜单容器宽度
+        menu_container.width = page.width * 0.2
+        # 设置最小宽度
+        if menu_container.width < 180:  # 保证菜单最小宽度
+            menu_container.width = 180
+        page.update()
+
+    # 注册窗口大小改变事件
+    page.on_resize = page_resize
 
     # 添加 FilePicker 控件到页面
     page.overlay.append(role_file_picker)
     page.overlay.append(add_role_dialog)
     # 添加编辑对话框到页面 overlay
     page.overlay.append(edit_role_dialog)
-
-    # 修改自动加载模型的实现
-    if settings['auto_load_model']:
-        asyncio.run(load_model_button_click(page))
 
     # 在page初始化后添加平台亮度变化的处理
     def on_platform_brightness_change(e):
@@ -1251,5 +1355,9 @@ def main(page: ft.Page):
 
     # 在应用初始化时设置当前主题
     set_theme_mode(settings.get('theme_mode', 'system'))
+
+    # 修改自动加载模型的实现
+    if settings['auto_load_model']:
+        asyncio.run(load_model_button_click(page))
 
 ft.app(target=main)
