@@ -251,7 +251,7 @@ def main(page: ft.Page):
     text_input = ft.TextField(
         label="文本内容",
         multiline=True,
-        min_lines=3,  # 最小显示3行
+        min_lines=1,  # 最小显示3行
         max_lines=8,  # 最大显示8行
         border=ft.InputBorder.OUTLINE,
         border_radius=8
