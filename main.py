@@ -226,7 +226,7 @@ def main(page: ft.Page):
             border_radius=10,
             width=180,
         )
-    
+
     # 添加打开Github页面的函数
     def open_github(e):
         import webbrowser
@@ -248,7 +248,14 @@ def main(page: ft.Page):
     settings_button = create_menu_button("设置", lambda e: show_page("settings"))
 
     # 语音克隆界面
-    text_input = ft.TextField(label="文本内容", multiline=True, border=ft.InputBorder.OUTLINE, border_radius=8)
+    text_input = ft.TextField(
+        label="文本内容",
+        multiline=True,
+        min_lines=3,  # 最小显示3行
+        max_lines=8,  # 最大显示8行
+        border=ft.InputBorder.OUTLINE,
+        border_radius=8
+    )
     speaker_input = ft.TextField(label="说话人", border=ft.InputBorder.OUTLINE, border_radius=8)
     prompt_input = ft.TextField(label="提示音频路径或URL", border=ft.InputBorder.OUTLINE, border_radius=8)
     
@@ -403,20 +410,38 @@ def main(page: ft.Page):
         clone_file_button
     ], spacing=10)
     
-    # 修改 clone_page 布局，继续使用 clone_row
+    # 修改 clone_page 布局
     clone_page = ft.Card(
         content=ft.Container(
-            content=ft.Column([
-                text_input,
-                speaker_input,
-                clone_row,
-                speed_input,
-                speed_value_text,
-                output_text,
-                ft.Row([generate_button, clear_button], alignment=ft.MainAxisAlignment.END, spacing=10)
-            ]),
-            padding=20
-        )
+            content=ft.Column(
+                [
+                    ft.Container(
+                        content=ft.Column(
+                            [
+                                text_input,
+                                speaker_input,
+                                clone_row,
+                                speed_input,
+                                speed_value_text,
+                                output_text,
+                                ft.Row(
+                                    [generate_button, clear_button],
+                                    alignment=ft.MainAxisAlignment.END,
+                                    spacing=10
+                                )
+                            ],
+                            scroll=ft.ScrollMode.AUTO,  # 添加滚动功能
+                            spacing=20,  # 增加组件间距
+                        ),
+                        expand=True,  # 允许容器扩展
+                    )
+                ],
+                expand=True,  # 允许列扩展
+            ),
+            padding=20,
+            expand=True,  # 允许容器扩展
+        ),
+        expand=True,  # 允许卡片扩展
     )
 
     # 生成记录界面
@@ -1206,49 +1231,6 @@ def main(page: ft.Page):
 
     # 修改自动加载模型的实现
     if settings['auto_load_model']:
-        # async def aload_model():
-        #     # 创建加载中对话框
-        #     loading_dialog = ft.AlertDialog(
-        #         modal=True,
-        #         title=ft.Text("加载模型"),
-        #         content=ft.Column([
-        #             ft.ProgressRing(),
-        #             ft.Text("正在加载模型，请稍候...", text_align=ft.TextAlign.CENTER)
-        #         ], 
-        #         horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-        #     )
-        #     page.dialog = loading_dialog
-        #     page.open(loading_dialog)
-        #     update_title()
-        #     try:
-        #         await load_model()
-        #         # 显示成功提示
-        #         success_dialog = ft.AlertDialog(
-        #             modal=True,
-        #             title=ft.Text("成功"),
-        #             content=ft.Text("模型加载完成！"),
-        #             actions=[
-        #                 ft.TextButton("确定", on_click=lambda _: page.close(success_dialog))
-        #             ],
-        #         )
-        #         page.close(loading_dialog)
-        #         page.dialog = success_dialog
-        #         page.open(success_dialog)
-        #         update_title()
-        #     except Exception as ex:
-        #         # 显示错误提示
-        #         error_dialog = ft.AlertDialog(
-        #             modal=True,
-        #             title=ft.Text("错误"),
-        #             content=ft.Text(f"加载失败：{str(ex)}"),
-        #             actions=[
-        #                 ft.TextButton("确定", on_click=lambda _: page.close(error_dialog))
-        #             ],
-        #         )
-        #         page.close(loading_dialog)
-        #         page.dialog = error_dialog
-        #         page.open(error_dialog)
-
         asyncio.run(load_model_button_click(page))
 
     # 在page初始化后添加平台亮度变化的处理
