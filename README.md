@@ -41,8 +41,8 @@
     # 在桌面运行
     flet run
 
-    # 在web中运行
-    flet run --web main.py
+    # 在浏览器中运行
+    flet run -w --host 127.0.0.1 -p 8000
     ```
 
 ### 模型获取

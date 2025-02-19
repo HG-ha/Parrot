@@ -42,7 +42,7 @@ Multi-role voice cloning project based on CosyVoice2-0.5B.
     flet run
 
     # Run in the browser
-    flet run --web main.py
+    flet run -w --host 127.0.0.1 -p 8000
     ```
 
 ### Model Download
