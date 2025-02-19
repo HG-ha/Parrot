@@ -538,6 +538,15 @@ def main(page: ft.Page):
             def handle_delete(e, dialog):
                 dialog.open = False
                 page.update()
+                
+                # 删除音频文件
+                if os.path.exists(item['file_path']):
+                    try:
+                        os.remove(item['file_path'])
+                        mlog.info(f"成功删除音频文件: {item['file_path']}")
+                    except Exception as ex:
+                        mlog.error(f"删除音频文件失败: {str(ex)}")
+
                 history.remove(item)
                 save_history(history)
                 history_list.controls.remove(container)
