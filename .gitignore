@@ -36,7 +36,7 @@ venv.bak/
 .DS_Store
 
 # 项目特定
-pretrained_models/
+cosyvoice_api/
 outputs/
 temp/
 cache/
@@ -46,7 +46,8 @@ logs/
 history/
 config/history.json
 config/settings.json
-
+windows_x64_cosyvoice_api.7z
+Release/
 
 *.wav
 *.mp3
