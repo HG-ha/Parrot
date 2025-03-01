@@ -2,22 +2,22 @@
 
 English | [简体中文](./README.md)
 
-Multi-character voice cloning project based on `CosyVoice2-0.5B` model using `flet` UI framework.
+A multi-role voice cloning project based on the `CosyVoice2-0.5B` model using the `flet` UI framework.
 
-> System Requirements: Minimum 6GB available RAM or GPU memory, at least 10GB storage space
+> Model Requirements: At least 6GB available RAM or GPU memory, at least 10GB storage space
 
 ## Key Features
 
-- Support local audio files or URL direct cloning
+- Support for local audio files or URL direct cloning
 - One-click voice switching with preset characters
-- Quick parameter reuse from history records
+- Quick parameter reuse from history
 - Automatic model loading support
 
-## Usage Guide
+## User Guide
 
 ### Quick Start
 1. Download the corresponding platform version from [Releases](https://github.com/HG-ha/Parrot/releases), run and extract
-2. Choose one method to download the model
+2. Choose one of two methods to download the model
     - Manual download
         1. Download links
             - [Baidu Netdisk](https://pan.baidu.com/s/1731fksU1zH0YPAU1Bfgx-Q?pwd=y67e) Code: y67e
@@ -27,9 +27,21 @@ Multi-character voice cloning project based on `CosyVoice2-0.5B` model using `fl
             > Or move the downloaded files to this path, then click `Run Model` - `Auto Download`, the program will automatically extract and run the model
 
     - Automatic download (occasionally slow but convenient)
-        > After startup, click the "Run Model" button in the settings interface to automatically download model files
+        > After startup, click the "Run Model" button in settings for automatic model download
 
-3. Double click Parrot.exe to run
+3. Double-click Parrot.exe to run
+
+### Parameter Description
+1. Text Content: Content to be read
+2. Speaker: Choose a preset speaker (character) or customize one
+3. Prompt Audio: A clean voice audio file or accessible file URL
+4. Prompt Text (Language Control): Controls the language of reading, e.g., **"Please read this in British accent"**
+5. Reference Audio Text Content (Precise Mode): The actual text content of the `Prompt Audio`. For example, if your chosen audio says "Hello, welcome to Parrot", you should enter "Hello, welcome to Parrot" here
+
+### Mode Differences
+1. Quick Inference: Directly generates speech using audio, with ordinary results
+2. Language Control: Similar to `1`, but supports language modification through prompt text
+3. Precise Mode: Excellent results but requires the actual text content of the `Prompt Audio`
 
 ### Development Environment Setup
 
@@ -59,9 +71,9 @@ Multi-character voice cloning project based on `CosyVoice2-0.5B` model using `fl
     flet run -w --host 127.0.0.1 -p 8000
     ```
 
-### Cross-Platform Publishing
-  1. It's recommended not to install Flutter SDK in the system as it may cause Flet compilation to become unresponsive. Flet will automatically install Flutter SDK during compilation
-  2. Correctly install Flutter SDK dependencies
+### Deploy to Other Platforms
+  1. Avoid installing flutter sdk in the system as it may cause flet compilation to become unresponsive. Flet will automatically install flutter sdk during compilation
+  2. Correctly install flutter sdk dependencies
   3. Clone project
       ```bash
       git clone https://github.com/HG-ha/Parrot.git
@@ -85,16 +97,16 @@ Multi-character voice cloning project based on `CosyVoice2-0.5B` model using `fl
   <p><em>Main Interface - Provides core voice cloning functionality and character switching</em></p>
 </div>
 
-### History Records
+### History
 <div align="center">
-  <img src="./assets/history.png" alt="History Records" width="800"/>
+  <img src="./assets/history.png" alt="History Record" width="800"/>
   <p><em>History Page - View and reuse previous voice cloning parameters</em></p>
 </div>
 
-### Character Management
+### Role Management
 <div align="center">
-  <img src="./assets/role.png" alt="Character Management" width="800"/>
-  <p><em>Character Management Interface - Add, edit, and manage preset characters</em></p>
+  <img src="./assets/role.png" alt="Role Management" width="800"/>
+  <p><em>Role Management Interface - Add, edit, and manage preset characters</em></p>
 </div>
 
 ### System Configuration
