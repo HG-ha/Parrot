@@ -5,7 +5,6 @@ import aiohttp
 import asyncio
 import py7zr
 import app.core.mlog as mlog
-import zipfile
 from py7zr.callbacks import ExtractCallback
 
 class ModelExtractCallback(ExtractCallback):

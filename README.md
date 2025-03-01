@@ -21,7 +21,7 @@
     - 手动下载模型文件
         1. 下载地址
             - [百度网盘](https://pan.baidu.com/s/1731fksU1zH0YPAU1Bfgx-Q?pwd=y67e) 提取码: y67e
-            - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EQVNg3H2_p1OrGo3sXeIgIoBXCEphc55pq9ZvyxUMTAIBw?e=UpIF28)
+            - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EWa8OyXOLb1KoCYX-6lJHeUBHKiI4VzKmnRyFf8k0yumYQ?e=eGFDsv)
             - [Onedrive国内下载地址](https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VXYThPeVhPTGIxS29DWVgtNmxKSGVVQkhLaUk0VnpLbW5SeUZmOGsweXVtWVE/ZT1tbGFGemg)
         2. 运行程序后点击 `设置` - `模型目录`，将模型文件解压至此
             > 或将下载的文件移动到该路径下，然后点击 `运行模型` - `自动下载`，程序将自动解压并运行模型

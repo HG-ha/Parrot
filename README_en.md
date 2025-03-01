@@ -21,7 +21,7 @@ Multi-character voice cloning project based on `CosyVoice2-0.5B` model using `fl
     - Manual download
         1. Download links
             - [Baidu Netdisk](https://pan.baidu.com/s/1731fksU1zH0YPAU1Bfgx-Q?pwd=y67e) Code: y67e
-            - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EQVNg3H2_p1OrGo3sXeIgIoBXCEphc55pq9ZvyxUMTAIBw?e=UpIF28)
+            - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EWa8OyXOLb1KoCYX-6lJHeUBHKiI4VzKmnRyFf8k0yumYQ?e=eGFDsv)
             - [Onedrive China Mirror](https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VXYThPeVhPTGIxS29DWVgtNmxKSGVVQkhLaUk0VnpLbW5SeUZmOGsweXVtWVE/ZT1tbGFGemg)
         2. After running the program, click `Settings` - `Model Directory`, extract the model files here
             > Or move the downloaded files to this path, then click `Run Model` - `Auto Download`, the program will automatically extract and run the model
