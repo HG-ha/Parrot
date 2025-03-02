@@ -447,8 +447,6 @@ class CosyVoiceApp:
                         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)))
                 ]
             )
-            self.page.dialog = error_dialog
-            error_dialog.open = True
-            self.page.update()
+            self.page.open(error_dialog)
 
 
