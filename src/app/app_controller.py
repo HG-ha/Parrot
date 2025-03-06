@@ -123,6 +123,19 @@ class CosyVoiceApp:
         # 设置主题模式
         self.page.theme_mode = self.settings_manager.get('theme_mode', 'system')
 
+        # 检查是否为移动端
+        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
+        
+        if self.is_mobile:
+            # 移动端特定配置
+            self.page.window.maximized = True
+            self.page.window.title_bar_hidden = False
+            self.page.padding = 0
+            self.page.spacing = 0
+        else:
+            # 桌面端配置保持不变
+            self.page.padding = 0
+
     def _create_pickers(self):
         """创建文件选择器"""
         # 克隆页面文件选择器
@@ -153,7 +166,7 @@ class CosyVoiceApp:
         self.main_container = ft.Container(
             content=None,  # 暂时为空，稍后会填充
             expand=True,
-            border_radius=20,
+            border_radius=15 if not self.is_mobile else 0,
             bgcolor=self._get_theme_color(ft.Colors.GREY_50, ft.Colors.GREY_900),
         )
         
@@ -230,46 +243,79 @@ class CosyVoiceApp:
         # 内容区域容器
         self.content_container = ft.Container(
             expand=True,
-            border_radius=20,
-            margin=ft.Margin(12, 12, 12, 12),
+            border_radius=20 if not self.is_mobile else 0,
+            margin=ft.Margin(12, 12, 12, 12) if not self.is_mobile else ft.Margin(0, 0, 0, 0),
         )
         
-        # 菜单
-        self.menu_container = SideMenu(
-            self.page, 
-            on_page_change=self.show_page,
-            on_toggle_menu=self._handle_toggle_menu,
-        )
+        # 移动端底部导航栏
+        if self.is_mobile:
+            self.bottom_nav = ft.NavigationBar(
+                destinations=[
+                    ft.NavigationBarDestination(icon=ft.Icons.MIC_ROUNDED, label="克隆"),
+                    ft.NavigationBarDestination(icon=ft.Icons.HISTORY_ROUNDED, label="历史"),
+                    ft.NavigationBarDestination(icon=ft.Icons.PERSON_ROUNDED, label="角色"),
+                    ft.NavigationBarDestination(icon=ft.Icons.SETTINGS_ROUNDED, label="设置"),
+                ],
+                on_change=lambda e: self._handle_mobile_navigation(e.control.selected_index),
+                height=65,
+            )
         
-        # 更新主容器内容
-        self.main_container.content = ft.Container(
-            content=ft.Column(
+        # 菜单 - 仅在非移动端显示
+        if not self.is_mobile:
+            self.menu_container = SideMenu(
+                self.page, 
+                on_page_change=self.show_page,
+                on_toggle_menu=self._handle_toggle_menu,
+            )
+        
+        # 根据平台创建不同的布局
+        if self.is_mobile:
+            # 移动端布局
+            self.main_container.content = ft.Column(
                 [
-                    self.title_bar, 
-                    ft.Container(  
-                        content=ft.Row(
-                            [
-                                self.menu_container,
-                                self.vertical_divider,
-                                self.content_container,
-                            ],
-                            expand=True,
-                            spacing=0,
-                        ),
+                    # 添加顶部安全区域
+                    ft.Container(height=35),  # 状态栏高度
+                    ft.Container(
+                        content=self.content_container,
                         expand=True,
                     ),
+                    # 添加底部安全区域
+                    ft.Container(height=15),  # 底部导航栏间距
                 ],
                 spacing=0,
-                expand=True
-            ),
-            expand=True,
-            shadow=ft.BoxShadow(
-                spread_radius=1,
-                blur_radius=4,
-                color=ft.Colors.with_opacity(0.12, ft.Colors.BLUE_GREY_400),
-                offset=ft.Offset(0, 2)
+                expand=True,
             )
-        )
+            self.page.navigation_bar = self.bottom_nav
+        else:
+            # 桌面端布局保持不变
+            self.main_container.content = ft.Container(
+                content=ft.Column(
+                    [
+                        self.title_bar, 
+                        ft.Container(  
+                            content=ft.Row(
+                                [
+                                    self.menu_container,
+                                    self.vertical_divider,
+                                    self.content_container,
+                                ],
+                                expand=True,
+                                spacing=0,
+                            ),
+                            expand=True,
+                        ),
+                    ],
+                    spacing=0,
+                    expand=True
+                ),
+                expand=True,
+                shadow=ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=4,
+                    color=ft.Colors.with_opacity(0.12, ft.Colors.BLUE_GREY_400),
+                    offset=ft.Offset(0, 2)
+                )
+            )
         
         # 将主容器添加到页面
         self.page.add(self.main_container)
@@ -327,8 +373,12 @@ class CosyVoiceApp:
         # 更新主容器背景色
         self.main_container.bgcolor = ft.Colors.GREY_50 if is_light else ft.Colors.GREY_900
         
-        # 更新菜单样式
-        self.menu_container.update_theme(mode)
+        # 更新移动端底部导航栏样式
+        if self.is_mobile and hasattr(self, 'bottom_nav'):
+            self.bottom_nav.bgcolor = ft.Colors.GREY_100 if is_light else ft.Colors.GREY_800
+        # 更新桌面端菜单样式
+        elif not self.is_mobile and hasattr(self, 'menu_container'):
+            self.menu_container.update_theme(mode)
         
         # 更新内容区域的颜色
         if self.content_container.content:
@@ -371,7 +421,15 @@ class CosyVoiceApp:
                 self.content_container.content = self.settings_page
             
             # 更新菜单选中状态
-            self.menu_container.update_selected_page(page_name)
+            if self.is_mobile:
+                # 更新底部导航栏选中状态
+                pages = ["clone", "history", "roles", "settings"]
+                if page_name in pages:
+                    self.bottom_nav.selected_index = pages.index(page_name)
+                    self.page.floating_action_button.visible = True if page_name == "roles" else False
+            else:
+                # 更新侧边菜单选中状态
+                self.menu_container.update_selected_page(page_name)
             
             # 更新颜色
             card_color = self._get_theme_color(ft.Colors.GREY_50, ft.Colors.GREY_900)
@@ -391,16 +449,21 @@ class CosyVoiceApp:
                 content=ft.Text(f"切换到{page_name}页面失败，请重试。"),
                 actions=[
                     ft.TextButton("确定", 
-                                  on_click=lambda _: (setattr(error_dialog, "open", False), self.page.update()),
-                                  style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)))
+                                 on_click=lambda _: (setattr(error_dialog, "open", False), self.page.update()),
+                                 style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)))
                 ],
             )
             self.page.open(error_dialog)
 
+    def _handle_mobile_navigation(self, index):
+        """处理移动端底部导航切换"""
+        pages = ["clone", "history", "roles", "settings"]
+        if 0 <= index < len(pages):
+            self.show_page(pages[index])
+
     def initialize(self):
         """初始化应用"""
         try:
-            # 首先设置主题并显示界面
             self.set_theme_mode(self.settings_manager.get('theme_mode', 'system'))
             self.show_page("clone")
             self.page.update()
@@ -416,12 +479,21 @@ class CosyVoiceApp:
             self.history_callbacks.history_on_page_change(1, self.history_page.page_size, "")
             
             # 处理特殊平台显示
-            if self.page.web or self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS, ft.PagePlatform.ANDROID_TV]:
+            if self.page.web:
+                self.title_bar.visible = False
+            elif self.is_mobile:
                 self.title_bar.visible = False
                 self.main_container.border_radius = 0
-
-            # 默认折叠导航并更新界面
-            self.menu_container.toggle_menu()
+                # 移动端默认不折叠菜单
+                if hasattr(self, 'menu_container'):
+                    self.menu_container.visible = False
+            elif self.page.platform == ft.PagePlatform.LINUX:
+                self.title_bar.visible = False
+            
+            # 仅在非移动端执行默认折叠导航
+            if not self.is_mobile and hasattr(self, 'menu_container'):
+                self.menu_container.toggle_menu()
+            
             self.page.update()
             
             # 检查API连接
@@ -447,6 +519,8 @@ class CosyVoiceApp:
                         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)))
                 ]
             )
-            self.page.open(error_dialog)
+            self.page.dialog = error_dialog
+            error_dialog.open = True
+            self.page.update()
 
 

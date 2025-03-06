@@ -1,6 +1,6 @@
 [project]
-name = "parrot"
-version = "1.0.0"
+name = "Parrot"
+version = "1.0.1"
 description = ""
 readme = "README.md"
 requires-python = ">=3.9"
@@ -10,7 +10,7 @@ authors = [
 dependencies = [
   "flet==0.27.2",
   "flet_audio==0.1.0",
-  "aiohttp",  # 避免pypi.flet.dev造成的报错
+  "aiohttp",
   "websockets",
   "py7zr"
 ]
@@ -22,7 +22,7 @@ org = "com.parrot"
 
 # project display name that is used as an app title on Android and iOS home screens,
 # shown in window titles and about app dialogs on desktop.
-product = "parrot"
+product = "Parrot"
 
 # company name to display in about app dialogs
 company = "Parrot"
@@ -46,7 +46,7 @@ flet = {extras = ["all"], version = "0.27.2"}
 
 [tool.flet.splash]
 color = "#FFFF00" # --splash-color
-dark_color = "#8B8000" # --splash-dark-color
-web = false # --no-web-splash
-ios = false # --no-ios-splash
-android = false # --no-android-splash
+dark_color = "#86A79A" # --splash-dark-color
+web = true # --no-web-splash
+ios = true # --no-ios-splash
+android = true # --no-android-splash

@@ -89,8 +89,7 @@ class HistoryCallbacks:
         mlog.debug(f"历史页面回调 - 加载页码: {page}, 每页显示: {page_size}, 关键词: '{keyword}'")
         
         try:
-            # 强制更新当前页面的设置
-            self.app.history_page.current_page = page
+
             self.app.history_page.page_size = page_size
             
             # 获取筛选或全部数据

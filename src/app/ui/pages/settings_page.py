@@ -197,6 +197,16 @@ class SettingsPage(ft.Card):
         self.model_host_input.on_change = self._save_api_settings
         self.model_port_input.on_change = self._save_api_settings
         
+        # 本地模型标题
+        self.local_model_title = ft.Text("本地模型设置", size=20, weight=ft.FontWeight.BOLD)
+
+        # 本地模型相关按钮
+        self.open_folder_button = ft.Row([
+                    self.open_folder_button,
+                    self.run_model_button,
+                    self.model_status_text
+                ], spacing=10)
+
         # 组合页面内容
         content = ft.Container(
             content=ft.Column([
@@ -207,15 +217,11 @@ class SettingsPage(ft.Card):
                     self.api_status_text
                 ], spacing=10),
                 ft.Divider(),
-                ft.Text("本地模型设置", size=20, weight=ft.FontWeight.BOLD),
+                self.local_model_title,
                 self.model_host_input,
                 self.model_port_input,
                 self.auto_load_model_checkbox,
-                ft.Row([
-                    self.open_folder_button,
-                    self.run_model_button,
-                    self.model_status_text
-                ], spacing=10),
+                self.open_folder_button,
                 self.model_output_container,
                 ft.Divider(),
                 ft.Text("界面设置", size=20, weight=ft.FontWeight.BOLD),
@@ -235,7 +241,17 @@ class SettingsPage(ft.Card):
             padding=20,
             expand=True
         )
-        
+
+        # 当存在于Android、iOS平台时，隐藏本地模型相关
+        if self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS, ft.PagePlatform.ANDROID_TV]:
+            self.model_host_input.visible = False
+            self.model_port_input.visible = False
+            self.auto_load_model_checkbox.visible = False
+            self.local_model_title.visible = False
+            self.model_output_container.visible = False
+            self.open_folder_button.visible = False
+            content.content.controls[3].visible = False
+
         # 调用父类初始化
         super().__init__(
             content=content,

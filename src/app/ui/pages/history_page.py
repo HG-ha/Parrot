@@ -22,6 +22,9 @@ class HistoryPage(ft.Card):
         self.page_size = 5  # 修改默认每页显示为5条
         self.total_history = 0
         self.current_keyword = ""
+
+        # 检查是否为移动端
+        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
         
         # 创建搜索框
         self.search_field = ft.TextField(
@@ -47,32 +50,35 @@ class HistoryPage(ft.Card):
             alignment=ft.MainAxisAlignment.CENTER
         )
 
-        # 创建历史记录列表
         self.history_list = ft.ListView(
             expand=True,
             spacing=10,
-            controls=[]  # 初始化为空
+            controls=[]
         )
-        
-        # 分页控件
+
+
         self.pagination = Pagination(
-            total_items=0,  # 初始为0，稍后更新
+            total_items=0,
             page_size=self.page_size,
             current_page=self.current_page,
             on_page_change=self._on_page_change,
-            on_page_size_change=self._on_page_size_change  # 添加页面大小变更回调
+            on_page_size_change=self._on_page_size_change,  # 添加页面大小变更回调
+            is_mobile=self.is_mobile
         )
-        
-        # 布局构建
+
+        # 创建页面布局
         content = ft.Container(
             content=ft.Column([
                 self.search_row,
                 ft.Divider(),
                 self.history_list,
-                ft.Row(
-                    [self.pagination],
-                    alignment=ft.MainAxisAlignment.END  # 设置为左对齐
-                ),  # 将分页控件放在行容器中并左对齐
+                ft.Container(
+                    content=ft.Row(
+                        [self.pagination],
+                        alignment=ft.MainAxisAlignment.END if not self.is_mobile else ft.MainAxisAlignment.CENTER
+                    ),
+                    padding=ft.padding.symmetric(vertical=10),  # 添加垂直内边距
+                )
             ]),
             padding=20
         )
@@ -226,39 +232,50 @@ class HistoryPage(ft.Card):
         return container
 
     def update_history_list(self, history, global_audio_state, total_count=None):
-        """更新历史记录列表
-        
-        Args:
-            history: 历史记录数据列表
-            global_audio_state: 全局音频状态
-            total_count: 过滤后的总记录数(可选)
-        """
-        mlog.debug(f"更新历史记录列表: 获取到 {len(history)} 条记录")
-        self.history_items = history
-        
-        # 更新总记录数
-        if total_count is not None:
-            self.total_history = total_count
-            self.pagination.update_total(total_count)
-            mlog.debug(f"更新分页器总数: {total_count}")
-        
-        # 先创建历史记录项控件列表
-        history_items = [self.create_history_item(item, global_audio_state) for item in history]
-        
-        # 更新列表控件，但先检查是否已添加到页面
-        self.history_list.controls = history_items
-        
+        """更新历史记录列表"""
         try:
-            # 安全地更新UI
-            if hasattr(self.history_list, "_Control__page") and self.history_list._Control__page:
-                self.history_list.update()
-                mlog.debug("历史记录列表更新完成(直接更新)")
+            mlog.debug(f"更新历史记录列表: 获取到 {len(history)} 条记录")
+            self.history_items = history
+            
+            if self.is_mobile:
+                # 移动端：追加新数据而不是替换
+                if self.current_page == 1:
+                    # 第一页：清空并添加新数据
+                    self.history_list.controls = [
+                        self.create_history_item(item, global_audio_state) 
+                        for item in history
+                    ]
+                else:
+                    # 后续页：追加新数据
+                    if history:  # 只有当有新数据时才追加
+                        self.history_list.controls.extend([
+                            self.create_history_item(item, global_audio_state) 
+                            for item in history
+                        ])
+                        mlog.debug(f"追加了 {len(history)} 条新记录")
+                        self.current_page += 1
+                
+                # 重置加载状态
+                self.is_loading = False
+                self.load_more_indicator.visible = False
+                
             else:
-                # 如果列表尚未添加到页面，不要调用update()
-                mlog.debug("历史记录列表已设置，但不直接更新(等待父控件更新)")
-        except Exception as e:
-            mlog.error(f"更新历史列表失败: {str(e)}")
-    
+                # 桌面端逻辑保持不变
+                self.history_list.controls = [
+                    self.create_history_item(item, global_audio_state) 
+                    for item in history
+                ]
+                if total_count is not None:
+                    self.total_history = total_count
+                    self.pagination.update_total(total_count)
+
+            # 更新UI
+            self.history_list.update()
+            self.page.update()
+            
+        except Exception as ex:
+            mlog.error(f"更新历史列表失败: {str(ex)}")
+
     def _filter_history(self, e):
         """根据关键词过滤历史记录"""
         self.current_keyword = self.search_field.value.strip().lower()
@@ -295,6 +312,8 @@ class HistoryPage(ft.Card):
             self.callbacks["on_page_change"](page, self.page_size, self.current_keyword)
         else:
             mlog.warning("历史页面 - 没有找到页面变更回调函数")
+
+        self.history_list.scroll_to(offset=0, duration=300)
     
     def _on_page_size_change(self, new_size, new_page):
         """
@@ -315,3 +334,5 @@ class HistoryPage(ft.Card):
         elif "on_page_change" in self.callbacks:
             # 如果没有专门的页面大小变更回调，则使用页码变更回调
             self.callbacks["on_page_change"](new_page, new_size, self.current_keyword)
+        
+        self.history_list.scroll_to(offset=0, duration=300)

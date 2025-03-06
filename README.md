@@ -20,16 +20,26 @@
 2. 模型下载二选一
     - 手动下载模型文件
         1. 下载地址
-            - [百度网盘](https://pan.baidu.com/s/1731fksU1zH0YPAU1Bfgx-Q?pwd=y67e) 提取码: y67e
-            - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EWa8OyXOLb1KoCYX-6lJHeUBHKiI4VzKmnRyFf8k0yumYQ?e=eGFDsv)
-            - [Onedrive国内下载地址](https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VXYThPeVhPTGIxS29DWVgtNmxKSGVVQkhLaUk0VnpLbW5SeUZmOGsweXVtWVE/ZT1tbGFGemg)
+            - v1.0.0及之前版本
+              - [百度网盘](https://pan.baidu.com/s/1731fksU1zH0YPAU1Bfgx-Q?pwd=y67e) 提取码: y67e
+              - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EWa8OyXOLb1KoCYX-6lJHeUBHKiI4VzKmnRyFf8k0yumYQ?e=eGFDsv)
+              - [Onedrive国内下载地址](https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VXYThPeVhPTGIxS29DWVgtNmxKSGVVQkhLaUk0VnpLbW5SeUZmOGsweXVtWVE/ZT1tbGFGemg)
+            - v1.0.1版本
+              - windows系统
+                - [百度网盘](https://pan.baidu.com/s/1PMYoXbx19KHab6ol-pjUcg?pwd=7yh3) 提取码: 7yh3
+                - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EVWpMPlL5a5Nr-F3pNlqS7gBgSM39vB-10VYUYH8-2lpLw?e=sEEgNt)
+                - [Onedrive国内下载地址](https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VWV3BNUGxMNWE1TnItRjNwTmxxUzdnQmdTTTM5dkItMTBWWVVZSDgtMmxwTHc/ZT16Z0tVenE)
+              - linux系统
+                - [百度网盘](https://pan.baidu.com/s/1PMYoXbx19KHab6ol-pjUcg?pwd=7yh3) 提取码: 7yh3
+                - [Onedrive](https://1drv.ms/u/c/29eaba19ed77d64a/EbQoqalTz-9PuoHyBWYFjL4B55QbvNfh0u4gdHo4mLgPZA?e=nsf0Li)
+                - [Onedrive国内下载地址](https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0ViUW9xYWxUei05UHVvSHlCV1lGakw0QjU1UWJ2TmZoMHU0Z2RIbzRtTGdQWkE/ZT1kSkR1MUo)
         2. 运行程序后点击 `设置` - `模型目录`，将模型文件解压至此
             > 或将下载的文件移动到该路径下，然后点击 `运行模型` - `自动下载`，程序将自动解压并运行模型
 
     - 自动下载模型文件（偶尔较慢，但很方便）
         > 启动后，点击设置界面中的“运行模型”按钮，自动下载模型文件
 
-3. 双击Parrot.exe运行
+3. windows下双击 `Parrot.exe`，linux下 `./parrot`
 
 ### 参数说明
 1. 文本内容：需要朗读的内容
@@ -42,6 +52,17 @@
 1. 快速推理：直接使用音频进行语音生成，效果较为普通
 2. 语言控制：效果与`1`类似，但支持通过提示词来更改实际生成的语言
 3. 精准模式：效果很好，但需要提供`提示音频`的实际文本内容
+
+
+### 单独在平台上运行模型API（模型分离场景）
+>由于接口未做鉴权，请在内网环境下使用
+- Windows系统
+  1. 下载对应版本的windows模型并解压
+  2. 切换到模型路径，在cmd中执行 `python.exe fastapi_app.py`
+
+- Linux系统
+  1. 下载对应版本的linux模型并解压
+  2. 切换到模型路径，在终端中执行 `./bin/python3 fastapi_app.py`
 
 ### 部署开发环境
 
@@ -115,5 +136,11 @@
 ### 系统配置
 <div align="center">
   <img src="./assets/setting.png" alt="系统设置" width="800"/>
+  <p><em>设置界面 - 调整系统参数和模型配置</em></p>
+</div>
+
+### 手机
+<div align="center">
+  <img src="./assets/mobile.png" alt="移动设备" width="160"/>
   <p><em>设置界面 - 调整系统参数和模型配置</em></p>
 </div>

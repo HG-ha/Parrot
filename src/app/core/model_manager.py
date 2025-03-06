@@ -3,9 +3,15 @@ import subprocess
 import threading
 import aiohttp
 import asyncio
-import py7zr
 import app.core.mlog as mlog
-from py7zr.callbacks import ExtractCallback
+
+# 屏蔽不支持平台下的py7zr
+try:
+    import py7zr
+    from py7zr.callbacks import ExtractCallback
+except Exception as e:
+    class ExtractCallback:
+        pass
 
 class ModelExtractCallback(ExtractCallback):
     """模型解压进度回调类"""
@@ -68,8 +74,14 @@ class ModelManager:
             "api_url": None,  # 添加 API URL 存储
         }
         self.root_dir = os.getcwd()
-        self.model_url = "https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VXYThPeVhPTGIxS29DWVgtNmxKSGVVQkhLaUk0VnpLbW5SeUZmOGsweXVtWVE/ZT1tbGFGemg"
-    
+        # 当系统为windows时，使用win模型
+        if os.name == 'nt':
+            self.model_url = "https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0VWV3BNUGxMNWE1TnItRjNwTmxxUzdnQmdTTTM5dkItMTBWWVVZSDgtMmxwTHc/ZT16Z0tVenE"
+        elif os.name == 'posix':
+            self.model_url = "https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8yOWVhYmExOWVkNzdkNjRhL0ViUW9xYWxUei05UHVvSHlCV1lGakw0QjU1UWJ2TmZoMHU0Z2RIbzRtTGdQWkE/ZT1kSkR1MUo"
+        else:
+            self.model_url = None
+
     def is_model_path_exists(self):
         """
         检查模型路径是否存在
@@ -99,7 +111,14 @@ class ModelManager:
                 return False, "MODEL_NOT_FOUND"
             
             # 使用cosyvoice_api目录下的Python解释器
-            python_exe = os.path.join(model_path, "python.exe")
+            # 目前只做了win和linux的模型
+            if os.name == 'nt':
+                python_exe = os.path.join(model_path, "python.exe")
+            elif os.name == 'posix':
+                python_exe = os.path.join(model_path, "bin", "python3")
+            else:
+                False, "PYTHON_NOT_FOUND"
+
             if not os.path.exists(python_exe):
                 error_msg = f"Python解释器不存在: {python_exe}"
                 mlog.error(error_msg)
@@ -116,6 +135,9 @@ class ModelManager:
             env = os.environ.copy()
             env['PYTHONHOME'] = model_path  # 设置Python Home为模型目录
             env['PYTHONPATH'] = os.path.join(model_path, 'Lib', 'site-packages')
+            # 添加 modelscope 相关环境变量，避免ast索引引发的错误
+            env['MODELSCOPE_CACHE_HOME'] = os.path.join(model_path, 'modelscope_cache')
+            env['MODELSCOPE_AST_DISABLE'] = '1'  # 禁用 AST 索引功能
 
             # 清空之前的输出
             with self.state["output_lock"]:
@@ -301,9 +323,17 @@ class ModelManager:
         """
         if self.state["process"] and (self.state["running"] or self.state["starting"]):
             try:
-                # 在Windows上终止进程及其子进程
+                # 在Windows上终止进程及其子进程，屏蔽cmd出现
                 if os.name == 'nt':
-                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.state["process"].pid)],stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    startupinfo.wShowWindow = subprocess.SW_HIDE
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', 
+                                    str(self.state["process"].pid)],
+                                    stderr=subprocess.DEVNULL,
+                                    stdout=subprocess.DEVNULL,
+                                    startupinfo=startupinfo
+                                    )
                 else:
                     self.state["process"].terminate()
                     self.state["process"].wait(timeout=5)
@@ -358,9 +388,6 @@ class ModelManager:
         try:
             # 创建临时文件路径
             temp_zip = os.path.join(self.root_dir, "cosyvoice_api.7z")
-            # 确保cosyvoice_api目录存在
-            model_path = os.path.join(self.root_dir, "cosyvoice_api")
-            os.makedirs(model_path, exist_ok=True)
 
             # 检查文件是否已存在
             if os.path.exists(temp_zip):
@@ -374,6 +401,9 @@ class ModelManager:
                         if progress_callback:
                             progress_callback(-1, -1, "正在连接下载服务器...")
                         
+                        if self.model_url is None:
+                            return False, "该系统暂未适配模型"
+
                         async with session.get(self.model_url) as response:
                             if response.status != 200:
                                 error_msg = f"下载失败: 状态码 {response.status}"
@@ -404,6 +434,9 @@ class ModelManager:
                         return False, error_msg
             
             # 解压文件
+            # 确保cosyvoice_api目录存在
+            model_path = os.path.join(self.root_dir, "cosyvoice_api")
+            os.makedirs(model_path, exist_ok=True)
             try:
                 if progress_callback:
                     progress_callback(-1, -1, "正在打开压缩文件...")

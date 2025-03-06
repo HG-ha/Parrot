@@ -22,6 +22,8 @@ class RolesPage(ft.Card):
         self.page_size = 5  # 修改默认每页显示为5条
         self.total_roles = 0
         self.current_keyword = ""
+
+        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
         
         # 创建搜索框，添加后缀清除按钮，设置高度使其更矮
         self.search_field = ft.TextField(
@@ -61,15 +63,25 @@ class RolesPage(ft.Card):
             page_size=self.page_size,
             current_page=self.current_page,
             on_page_change=self._on_page_change,
-            on_page_size_change=self._on_page_size_change  # 添加页面大小变更回调
+            on_page_size_change=self._on_page_size_change,  # 添加页面大小变更回调
+            is_mobile=self.is_mobile
         )
         
-        # 添加角色按钮
-        self.add_role_button = ft.ElevatedButton(
-            text="添加角色",
-            on_click=self._show_add_dialog,
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
-        )
+        if self.is_mobile:
+            self.add_role_button = ft.FloatingActionButton(
+                icon=ft.Icons.ADD,
+                on_click=self._show_add_dialog,
+                tooltip="添加角色",
+            )
+            # 将FAB添加到页面
+            self.page.floating_action_button = self.add_role_button
+            self.page.floating_action_button_location = ft.FloatingActionButtonLocation.END_FLOAT
+        else:
+            self.add_role_button = ft.ElevatedButton(
+                text="添加角色",
+                on_click=self._show_add_dialog,
+                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
+            )
         
         # 创建添加对话框的控件
         self.role_name_input = ft.TextField(label="角色名称")
@@ -162,12 +174,27 @@ class RolesPage(ft.Card):
         self.page.overlay.append(self.edit_role_dialog)
         
         # 创建页面布局
+        bottom_row_controls = []
+        if not self.is_mobile:
+            bottom_row_controls.append(self.add_role_button)
+            bottom_row_controls.append(self.pagination)
+            bottom_row_alignment = ft.MainAxisAlignment.SPACE_BETWEEN
+        else:
+            bottom_row_controls.append(self.pagination)
+            bottom_row_alignment = ft.MainAxisAlignment.CENTER
+            
         content = ft.Container(
             content=ft.Column([
                 self.search_row,
                 ft.Divider(),
                 self.roles_list,
-                ft.Row([self.add_role_button,self.pagination], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+                ft.Container(
+                    content=ft.Row(
+                        bottom_row_controls,
+                        alignment=bottom_row_alignment
+                    ),
+                    padding=ft.padding.symmetric(vertical=10)  # 添加垂直内边距
+                )
             ]),
             padding=20
         )
@@ -367,6 +394,7 @@ class RolesPage(ft.Card):
         # 然后调用回调函数获取当前页的数据
         if "on_page_change" in self.callbacks:
             self.callbacks["on_page_change"](page, self.page_size, self.current_keyword)
+        self.roles_list.scroll_to(offset=0, duration=300)
     
     def _on_page_size_change(self, new_size, new_page):
         """
@@ -387,6 +415,8 @@ class RolesPage(ft.Card):
         elif "on_page_change" in self.callbacks:
             # 如果没有专门的页面大小变更回调，则使用页码变更回调
             self.callbacks["on_page_change"](new_page, new_size, self.current_keyword)
+        
+        self.roles_list.scroll_to(offset=0, duration=300)
     
     def _filter_roles(self, e):
         """根据名称过滤角色"""

@@ -11,7 +11,8 @@ class Pagination(ft.Row):
         page_size=10,
         current_page=1,
         on_page_change=None,
-        on_page_size_change=None
+        on_page_size_change=None,
+        is_mobile=False
     ):
         """
         初始化分页组件
@@ -37,7 +38,11 @@ class Pagination(ft.Row):
             options=self._get_page_options(),
             value=str(current_page),
             on_change=self._on_page_selected,
+            width=120 if not is_mobile else 80,
+            visible = False if is_mobile else True
         )
+
+
         
         # 创建每页记录数选择器
         self.per_page_dropdown = ft.Dropdown(
@@ -48,7 +53,8 @@ class Pagination(ft.Row):
                 ft.dropdown.Option(text="50条/页", key="50")
             ],
             value=str(page_size),
-            on_change=self._on_page_size_selected
+            on_change=self._on_page_size_selected,
+            width=120 if not is_mobile else 100
         )
         
         # 上一页按钮
@@ -69,7 +75,7 @@ class Pagination(ft.Row):
         self.page_info = ft.Text(
             self._get_page_info_text(),
             size=12,
-            width=100
+            width=120 if not is_mobile else 60
         )
         
         # 初始化Row

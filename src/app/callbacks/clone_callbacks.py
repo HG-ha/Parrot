@@ -1,7 +1,9 @@
 import flet as ft
 import os
 import datetime
+import aiohttp
 from app.core.utils import run_async
+import app.core.mlog as mlog
 
 class CloneCallbacks:
     def __init__(self, app, page, settings_manager, api_manager, history_manager):
@@ -13,6 +15,33 @@ class CloneCallbacks:
         
         # 存储当前生成的音频文件路径
         self.current_audio_path = None
+
+        # 添加移动端特定属性
+        self.is_mobile = page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
+        if page.platform == ft.PagePlatform.ANDROID:
+            # Android 上尝试使用下载目录
+            base_dir = "/storage/emulated/0/Download"
+            if not os.path.exists(base_dir):
+                # 备选路径
+                base_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+        else:
+            # iOS 没有标准下载目录，使用文档目录
+            base_dir = os.path.join(os.path.expanduser("~"), "Documents")
+        
+        # 创建 Parrot/history 子目录
+        if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
+            self.mobile_audio_dir = os.path.join(base_dir, "Parrot", "history")
+        else:
+            # 如果无法访问标准目录，回退到应用内部存储
+            self.mobile_audio_dir = os.path.join(os.getcwd(), 'history')
+        try:
+            os.makedirs(self.mobile_audio_dir, exist_ok=True)
+            mlog.info(f"音频将保存到: {self.mobile_audio_dir}")
+        except Exception as e:
+            # 创建目录失败时回退到内部存储
+            self.mobile_audio_dir = os.path.join(os.getcwd(), "history")
+            os.makedirs(self.mobile_audio_dir, exist_ok=True)
+            mlog.warning(f"创建外部目录失败: {str(e)}，使用内部存储: {self.mobile_audio_dir}")
 
     def on_generate(self, e):
         """处理生成按钮点击事件"""
@@ -44,7 +73,7 @@ class CloneCallbacks:
         )
         
         if success:
-            self._handle_generation_success(params, result)
+            await self._handle_generation_success(params, result)
         else:
             self.app.clone_page.set_output_text(f"生成失败: {result}")
         
@@ -108,20 +137,67 @@ class CloneCallbacks:
             dialog.content.content.controls[1].value = f"生成进度: {progress:.1f}%"
         self.page.update()
 
-    def _handle_generation_success(self, params, result):
+    async def _download_audio_file(self, api_url, file_path):
+        """在移动端下载并保存音频文件"""
+        try:
+            # 提取文件名，忽略路径中的分隔符
+            filename = os.path.basename(file_path.replace('\\', '/'))
+            download_url = f"{api_url}/download/{filename}"
+            
+            # 使用时间戳作为文件名前缀，避免重复
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            local_filename = os.path.join(
+                self.mobile_audio_dir, 
+                f"{timestamp}_{filename}"
+            )
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(download_url) as response:
+                    if response.status == 200:
+                        with open(local_filename, 'wb') as f:
+                            while True:
+                                chunk = await response.content.read(8192)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                        return True, local_filename
+                    else:
+                        error_msg = f"下载失败，HTTP状态码: {response.status}"
+                        mlog.error(error_msg)
+                        return False, error_msg
+
+        except Exception as e:
+            error_msg = f"下载音频文件失败: {str(e)}"
+            mlog.error(error_msg)
+            return False, error_msg
+
+    async def _handle_generation_success(self, params, result):
         """处理生成成功的情况"""
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        target_file = os.path.join(
-            self.app.path_manager.history_dir, 
-            os.path.basename(result)
-        )
-        os.makedirs(os.path.dirname(target_file), exist_ok=True)
         
-        # 移动生成的文件到历史目录
-        if os.path.exists(result):
-            os.rename(result, target_file)
+        # 处理路径分隔符
+        normalized_result = result.replace('\\', '/')
         
-        # 创建历史记录
+        if self.is_mobile:
+            # 移动端：下载音频文件
+            api_url = self.settings_manager.get('api_url', 'http://127.0.0.1:8000')
+            success, local_file = await self._download_audio_file(api_url, normalized_result)
+            
+            if not success:
+                self.app.clone_page.set_output_text(f"下载音频失败: {local_file}")
+                return
+                
+            target_file = local_file
+        else:
+            # 桌面端处理逻辑
+            target_file = os.path.join(
+                self.app.path_manager.history_dir, 
+                os.path.basename(normalized_result)
+            )
+            os.makedirs(os.path.dirname(target_file), exist_ok=True)
+            if os.path.exists(result):
+                os.rename(result, target_file)
+        # 创建并添加历史记录
         record = {
             'text': params['text'],
             'speaker': params['speaker'],
@@ -132,32 +208,28 @@ class CloneCallbacks:
             'mode': params['mode']
         }
         
-        # 添加特定模式的参数
         if params['mode'] == "language_control":
             record['instruction'] = params['instruction']
         elif params['mode'] == "zero_shot":
             record['speaker_text'] = params['speaker_text']
         
-        # 添加到历史记录
+        # 更新历史记录和UI
         self.history_manager.add_record(record)
-        
-        # 更新历史页面
+        self._update_ui_after_generation(target_file)
+
+    def _update_ui_after_generation(self, target_file):
+        """更新生成后的UI元素"""
         if self.app.history_page:
             self.app.history_page.update_history_list(
                 self.history_manager.get_history(), 
                 self.app.global_audio_state
             )
         
-        # 保存当前生成的音频文件路径
         self.current_audio_path = target_file
-        
-        # 显示播放区域
         self.app.clone_page.show_audio_player(
             target_file, 
             os.path.basename(target_file)
         )
-        
-        # 更新输出文本
         self.app.clone_page.set_output_text(f"生成成功: {target_file}")
 
     def on_clear(self, e):
