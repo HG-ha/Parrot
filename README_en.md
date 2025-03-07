@@ -138,5 +138,5 @@ A multi-role voice cloning project using the `flet` UI framework, based on the `
 ### phone
 <div align="center">
   <img src="./assets/mobile.png" alt="phone" width="160"/>
-  <p><em>设置界面 - 调整系统参数和模型配置</em></p>
+  <p><em>Home</em></p>
 </div>
