@@ -142,5 +142,5 @@
 ### 手机
 <div align="center">
   <img src="./assets/mobile.png" alt="移动设备" width="160"/>
-  <p><em>设置界面 - 调整系统参数和模型配置</em></p>
+  <p><em>手机主页</em></p>
 </div>
