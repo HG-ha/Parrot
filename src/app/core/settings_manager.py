@@ -1,15 +1,14 @@
 import os
 import json
 import app.core.mlog as mlog
-from app.core.path_manager import PathManager
 
 class SettingsManager:
     """
     设置管理类，负责读取和保存应用设置
     """
-    def __init__(self):
+    def __init__(self, pathmanager):
         """初始化设置管理器"""
-        self.path_manager = PathManager()
+        self.path_manager = pathmanager
         self.settings_file = self.path_manager.settings_file
         self.settings = self._load_settings()
     

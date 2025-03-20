@@ -2,6 +2,8 @@ import flet as ft
 import os
 import datetime
 import aiohttp
+import json
+import shutil  # 添加shutil导入
 from app.core.utils import run_async
 import app.core.mlog as mlog
 
@@ -18,30 +20,10 @@ class CloneCallbacks:
 
         # 添加移动端特定属性
         self.is_mobile = page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
-        if page.platform == ft.PagePlatform.ANDROID:
-            # Android 上尝试使用下载目录
-            base_dir = "/storage/emulated/0/Download"
-            if not os.path.exists(base_dir):
-                # 备选路径
-                base_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-        else:
-            # iOS 没有标准下载目录，使用文档目录
-            base_dir = os.path.join(os.path.expanduser("~"), "Documents")
         
-        # 创建 Parrot/history 子目录
-        if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
-            self.mobile_audio_dir = os.path.join(base_dir, "Parrot", "history")
-        else:
-            # 如果无法访问标准目录，回退到应用内部存储
-            self.mobile_audio_dir = os.path.join(os.getcwd(), 'history')
-        try:
-            os.makedirs(self.mobile_audio_dir, exist_ok=True)
-            mlog.info(f"音频将保存到: {self.mobile_audio_dir}")
-        except Exception as e:
-            # 创建目录失败时回退到内部存储
-            self.mobile_audio_dir = os.path.join(os.getcwd(), "history")
-            os.makedirs(self.mobile_audio_dir, exist_ok=True)
-            mlog.warning(f"创建外部目录失败: {str(e)}，使用内部存储: {self.mobile_audio_dir}")
+        # 使用path_manager中的历史目录
+        self.mobile_audio_dir = self.app.path_manager.history_dir
+        mlog.info(f"音频将保存到: {self.mobile_audio_dir}")
 
     def on_generate(self, e):
         """处理生成按钮点击事件"""
@@ -195,8 +177,17 @@ class CloneCallbacks:
                 os.path.basename(normalized_result)
             )
             os.makedirs(os.path.dirname(target_file), exist_ok=True)
+            
             if os.path.exists(result):
-                os.rename(result, target_file)
+                try:
+                    # 使用shutil.move替代os.rename
+                    shutil.move(result, target_file)
+                except Exception as e:
+                    error_msg = f"移动音频文件失败: {str(e)}"
+                    mlog.error(error_msg)
+                    self.app.clone_page.set_output_text(error_msg)
+                    return
+
         # 创建并添加历史记录
         record = {
             'text': params['text'],
@@ -238,6 +229,41 @@ class CloneCallbacks:
         self.current_audio_path = None
         self.page.update()
 
+    async def _upload_file_to_api(self, file_path):
+        """将文件上传到API服务器"""
+        try:
+            # 获取API地址
+            api_url = self.settings_manager.get('api_url', 'http://127.0.0.1:8000')
+            upload_url = f"{api_url}/upload_file"
+            
+            # 读取文件内容
+            with open(file_path, 'rb') as f:
+                file_content = f.read()
+                
+            # 准备表单数据
+            form_data = aiohttp.FormData()
+            form_data.add_field('file',
+                                file_content,
+                                filename=os.path.basename(file_path),
+                                content_type='audio/wav')
+            
+            # 发送请求
+            async with aiohttp.ClientSession() as session:
+                async with session.post(upload_url, data=form_data) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        if result.get("success"):
+                            return True, result.get("relative_path")
+                        else:
+                            return False, result.get("error", "上传失败")
+                    else:
+                        return False, f"上传失败，HTTP状态码: {response.status}"
+                        
+        except Exception as e:
+            error_msg = f"上传文件失败: {str(e)}"
+            mlog.error(error_msg)
+            return False, error_msg
+
     def on_select_role(self, e):
         """打开角色选择对话框"""
         # 构建角色列表按钮
@@ -268,16 +294,29 @@ class CloneCallbacks:
         self.app.select_role_dialog.open = True
         self.page.update()
 
-    def select_role(self, role):
-        """选择角色后更新参数"""
+    async def select_role_with_upload(self, role):
+        """选择角色并处理文件上传（如果在移动端）"""
         # 获取当前选择的模式
         mode = self.app.clone_page.get_current_mode()
         
-        # 更新clone页面的参数
+        # 初始化参数
         params = {
-            'speaker': role["name"],
-            'prompt': role["file"]
+            'speaker': role["name"]
         }
+        
+        # 处理音频文件路径
+        file_path = role["file"]
+        if self.is_mobile:
+            # 如果是移动端，上传文件到API服务器
+            success, server_path = await self._upload_file_to_api(file_path)
+            if success:
+                params['prompt'] = server_path  # 使用服务器相对路径
+            else:
+                self._show_error_dialog(f"文件上传失败: {server_path}")
+                return
+        else:
+            # 桌面端直接使用文件路径
+            params['prompt'] = file_path
         
         # 根据不同模式设置额外参数
         if mode == "language_control":
@@ -285,7 +324,12 @@ class CloneCallbacks:
         elif mode == "zero_shot" and role.get("speaker_text"):
             params['speaker_text'] = role.get("speaker_text")
         
+        # 更新UI
         self.app.clone_page.set_parameters(params)
+
+    def select_role(self, role):
+        """选择角色后更新参数"""
+        run_async(self.select_role_with_upload(role))
 
     def on_select_file(self, e):
         """打开文件选择器"""
@@ -298,8 +342,21 @@ class CloneCallbacks:
         """文件选择完成后的回调"""
         if e.files:
             file_path = e.files[0].path
-            self.app.clone_page.set_parameters({'prompt': file_path})
+            run_async(self.handle_file_selection(file_path))
     
+    async def handle_file_selection(self, file_path):
+        """处理文件选择，根据平台决定是否上传"""
+        if self.is_mobile:
+            # 移动端上传文件
+            success, server_path = await self._upload_file_to_api(file_path)
+            if success:
+                self.app.clone_page.set_parameters({'prompt': server_path})
+            else:
+                self._show_error_dialog(f"文件上传失败: {server_path}")
+        else:
+            # 桌面端直接使用本地路径
+            self.app.clone_page.set_parameters({'prompt': file_path})
+
     def on_play_audio(self, e):
         """处理音频播放按钮点击"""
         audio_file = self.app.clone_page.get_current_audio_file()

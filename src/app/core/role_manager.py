@@ -1,17 +1,15 @@
 import os
 import json
 import app.core.mlog as mlog
-from app.core.db_manager import DBManager
-from app.core.path_manager import PathManager
 
 class RoleManager:
     """
     角色管理类，负责角色数据的读取和保存
     """
-    def __init__(self):
+    def __init__(self, pathmanager,dbmanager):
         """初始化角色管理器"""
-        self.path_manager = PathManager()
-        self.db_manager = DBManager()
+        self.path_manager = pathmanager
+        self.db_manager = dbmanager
         self.roles_file = self.path_manager.roles_file
         self._migrate_from_json_if_needed()
         self._ensure_speaker_text_column()

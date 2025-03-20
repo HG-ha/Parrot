@@ -69,7 +69,6 @@ class ModelManager:
             "output": [],     # 捕获的输出
             "max_output_lines": 200,  # 最大输出行数
             "output_lock": threading.Lock(),  # 输出锁
-            "model_path": os.path.join(os.getcwd(), "cosyvoice_api"),  # 模型路径
             "starting": False,  # 添加启动中状态
             "api_url": None,  # 添加 API URL 存储
         }
@@ -91,7 +90,7 @@ class ModelManager:
         """
         return os.path.exists(self.state["model_path"])
     
-    def run_model(self, host='127.0.0.1', port='8000', on_output=None, update_status=None):
+    def run_model(self, host='127.0.0.1', port='8000', on_output=None, update_status=None, path_manager=None):
         """
         运行模型
         
@@ -104,7 +103,9 @@ class ModelManager:
             tuple: (成功状态, 错误消息)
         """
         try:
-            model_path = self.state["model_path"]
+            # 使用 path_manager 中的模型路径
+            model_path = path_manager.model_path if path_manager else self.state.get("model_path")
+            
             if not os.path.exists(model_path):
                 error_msg = f"模型路径不存在: {model_path}"
                 mlog.error(error_msg)
@@ -503,3 +504,18 @@ class ModelManager:
         """
         model_path = os.path.join(self.root_dir, "cosyvoice_api")
         return os.path.exists(model_path)
+    
+    def update_model_path(self, path_manager):
+        """更新模型路径
+        
+        Args:
+            path_manager: 路径管理器实例
+        """
+        if path_manager:
+            new_path = path_manager.model_path
+            mlog.info(f"更新模型路径: {new_path}")
+            # 实际更新模型路径到状态中
+            if "model_path" not in self.state:
+                self.state["model_path"] = new_path
+            else:
+                self.state["model_path"] = new_path

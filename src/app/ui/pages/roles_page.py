@@ -23,7 +23,7 @@ class RolesPage(ft.Card):
         self.total_roles = 0
         self.current_keyword = ""
 
-        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
+        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS,ft.PagePlatform.ANDROID_TV]
         
         # 创建搜索框，添加后缀清除按钮，设置高度使其更矮
         self.search_field = ft.TextField(

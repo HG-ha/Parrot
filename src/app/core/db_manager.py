@@ -1,15 +1,14 @@
 import sqlite3
 import os
 import app.core.mlog as mlog
-from app.core.path_manager import PathManager
 
 class DBManager:
     """
     数据库管理类，负责SQLite数据库的连接和初始化
     """
-    def __init__(self):
+    def __init__(self, pathmanager):
         """初始化数据库管理器"""
-        self.path_manager = PathManager()
+        self.path_manager = pathmanager
         self.db_file = self.path_manager.database_file
         
         # 确保数据目录存在

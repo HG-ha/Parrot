@@ -3,17 +3,15 @@ import json
 import datetime
 import shutil
 import app.core.mlog as mlog
-from app.core.db_manager import DBManager
-from app.core.path_manager import PathManager
 
 class HistoryManager:
     """
     历史记录管理类，负责历史生成记录的读取和保存
     """
-    def __init__(self):
+    def __init__(self, pathmanager,dbmanager):
         """初始化历史记录管理器"""
-        self.path_manager = PathManager()
-        self.db_manager = DBManager()
+        self.path_manager = pathmanager
+        self.db_manager = dbmanager
         self.history_file = self.path_manager.history_file
         self.history_dir = self.path_manager.history_dir
         self._migrate_from_json_if_needed()

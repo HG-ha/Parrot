@@ -2,15 +2,14 @@ import json
 import aiohttp
 import websockets
 import os
-from app.core.path_manager import PathManager
 
 class ApiManager:
     """
     API管理类，负责与API服务器通信
     """
-    def __init__(self):
+    def __init__(self,pathmanager):
         """初始化API管理器"""
-        self.path_manager = PathManager()
+        self.path_manager = pathmanager
         self.temp_dir = self.path_manager.temp_dir
         self.history_dir = self.path_manager.history_dir
         

@@ -207,6 +207,52 @@ class SettingsPage(ft.Card):
                     self.model_status_text
                 ], spacing=10)
 
+        # 路径设置控件
+        self.model_path_input = ft.TextField(
+            label="模型路径",
+            value=self.settings.get('paths', {}).get('model_path', ''),
+            width=300,
+            border=ft.InputBorder.OUTLINE,
+            border_radius=8,
+            suffix=ft.IconButton(
+                icon=ft.icons.FOLDER_OPEN,
+                on_click=lambda _: self._pick_directory('model_path')
+            )
+        )
+        
+        self.history_path_input = ft.TextField(
+            label="历史记录路径",
+            value=self.settings.get('paths', {}).get('history_dir', ''),
+            width=300,
+            border=ft.InputBorder.OUTLINE,
+            border_radius=8,
+            suffix=ft.IconButton(
+                icon=ft.icons.FOLDER_OPEN,
+                on_click=lambda _: self._pick_directory('history_dir')
+            )
+        )
+
+        # 路径选择器
+        self.path_picker = ft.FilePicker(
+            on_result=self._on_path_picked
+        )
+        self.page.overlay.append(self.path_picker)
+        self._current_path_field = None
+
+        # 保存路径按钮
+        self.save_paths_button = ft.ElevatedButton(
+            text="保存路径设置",
+            on_click=self._save_paths,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
+        )
+
+        # 在保存路径按钮旁边添加恢复默认按钮
+        self.reset_paths_button = ft.ElevatedButton(
+            text="恢复默认路径",
+            on_click=self._reset_paths,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
+        )
+
         # 组合页面内容
         content = ft.Container(
             content=ft.Column([
@@ -232,6 +278,14 @@ class SettingsPage(ft.Card):
                 ft.Divider(),
                 ft.Text("缓存管理", size=20, weight=ft.FontWeight.BOLD),
                 self.clear_cache_button,
+                ft.Divider(),
+                ft.Text("路径设置", size=20, weight=ft.FontWeight.BOLD),
+                self.model_path_input,
+                self.history_path_input,
+                ft.Row([
+                    self.save_paths_button,
+                    # self.reset_paths_button,
+                ], spacing=10),
                 ft.Divider(),
                 self.settings_output_text
             ],
@@ -386,6 +440,8 @@ class SettingsPage(ft.Card):
         self.theme_mode_dropdown.value = settings.get('theme_mode', self.theme_mode_dropdown.value)
         self.auto_load_model_checkbox.value = settings.get('auto_load_model', self.auto_load_model_checkbox.value)
         self.logging_enabled_checkbox.value = settings.get('logging_enabled', self.logging_enabled_checkbox.value)
+        self.model_path_input.value = settings.get('paths', {}).get('model_path', self.model_path_input.value)
+        self.history_path_input.value = settings.get('paths', {}).get('history_dir', self.history_path_input.value)
         
         # 更新控件
         self.page.update()
@@ -445,3 +501,46 @@ class SettingsPage(ft.Card):
         """打开模型文件夹"""
         if "on_open_model_folder" in self.callbacks:
             self.callbacks["on_open_model_folder"]()
+
+    def _pick_directory(self, path_field):
+        """打开目录选择器"""
+        self._current_path_field = path_field
+        self.path_picker.get_directory_path()
+
+    def _on_path_picked(self, e):
+        """处理目录选择结果"""
+        if e.path and self._current_path_field:
+            if self._current_path_field == 'model_path':
+                self.model_path_input.value = e.path
+            elif self._current_path_field == 'history_dir':
+                self.history_path_input.value = e.path
+            self.page.update()
+
+    def _save_paths(self, e):
+        """保存路径设置"""
+        paths = {
+            'model_path': self.model_path_input.value,
+            'history_dir': self.history_path_input.value
+        }
+        
+        if "on_save_paths" in self.callbacks:
+            success = self.callbacks["on_save_paths"](paths)
+            if success:
+                self.settings_output_text.value = "路径设置已保存"
+            else:
+                self.settings_output_text.value = "保存路径设置失败"
+            self.settings_output_text.update()
+
+    def _reset_paths(self, e):
+        """恢复默认路径设置"""
+        if "on_reset_paths" in self.callbacks:
+            success = self.callbacks["on_reset_paths"]()
+            if success:
+                self.settings_output_text.value = "已恢复默认路径设置"
+                # 清空输入框值以使用默认值
+                self.model_path_input.value = ""
+                self.history_path_input.value = ""
+            else:
+                self.settings_output_text.value = "恢复默认路径设置失败"
+            self.settings_output_text.update()
+            self.page.update()

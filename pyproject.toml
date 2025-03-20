@@ -1,6 +1,6 @@
 [project]
 name = "Parrot"
-version = "1.0.1"
+version = "1.0.2"
 description = ""
 readme = "README.md"
 requires-python = ">=3.9"
@@ -8,11 +8,11 @@ authors = [
     { name = "YiMing", email = "1790233968@qq.com" }
 ]
 dependencies = [
-  "flet==0.27.2",
+  "flet==0.27.5",
   "flet_audio==0.1.0",
   "aiohttp",
   "websockets",
-  "py7zr"
+  "py7zr",
 ]
 
 [tool.flet]
@@ -33,20 +33,30 @@ copyright = "Copyright (C) 2025 by YiMing"
 [tool.flet.app]
 path = "src"
 
+
+[tool.flet.android]
+split_per_abi = true
+
+[tool.flet.android.permission]
+
+"android.permission.INTERNET" = true
+"android.permission.ACCESS_NETWORK_STATE" = true
+"android.permission.READ_EXTERNAL_STORAGE" = true
+"android.permission.WRITE_EXTERNAL_STORAGE" = true
+"android.permission.MANAGE_EXTERNAL_STORAGE" = true
+
 [tool.uv]
 dev-dependencies = [
-    "flet[all]==0.27.2",
+    "flet[all]==0.27.5",
 ]
 
 [tool.poetry]
 package-mode = false
 
 [tool.poetry.group.dev.dependencies]
-flet = {extras = ["all"], version = "0.27.2"}
+flet = {extras = ["all"], version = "0.27.5"}
 
 [tool.flet.splash]
-color = "#FFFF00" # --splash-color
-dark_color = "#86A79A" # --splash-dark-color
-web = true # --no-web-splash
-ios = true # --no-ios-splash
-android = true # --no-android-splash
+web = false # --no-web-splash
+ios = false # --no-ios-splash
+android = false # --no-android-splash

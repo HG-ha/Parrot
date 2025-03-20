@@ -1,5 +1,4 @@
 import flet as ft
-import threading
 import app.core.mlog as mlog
 import traceback
 from concurrent.futures import ThreadPoolExecutor
@@ -12,6 +11,7 @@ from app.core.history_manager import HistoryManager
 from app.core.audio_manager import AudioManager
 from app.core.model_manager import ModelManager
 from app.core.api_manager import ApiManager
+from app.core.db_manager import DBManager
 from app.core.utils import run_async
 
 # 导入自定义UI组件
@@ -26,18 +26,19 @@ from app.callbacks.settings_callbacks import SettingsCallbacks
 class CosyVoiceApp:
     """主应用控制器类"""
     
-    def __init__(self, page: ft.Page, app_name: str):
+    def __init__(self, page: ft.Page, app_name: str, package_name: str):
         self.page = page
         self.app_name = app_name
-        
+
         # 初始化各种管理器
-        self.path_manager = PathManager()
-        self.settings_manager = SettingsManager()
-        self.role_manager = RoleManager()
-        self.history_manager = HistoryManager()
+        self.path_manager = PathManager(self.page,package_name)
+        self.db_managet = DBManager(self.path_manager)
+        self.settings_manager = SettingsManager(self.path_manager)
+        self.role_manager = RoleManager(self.path_manager,self.db_managet)
+        self.history_manager = HistoryManager(self.path_manager,self.db_managet)
         self.audio_manager = AudioManager()
         self.model_manager = ModelManager()
-        self.api_manager = ApiManager()
+        self.api_manager = ApiManager(self.path_manager)
 
         # 全局状态
         self.global_audio_state = self.audio_manager.state
@@ -90,6 +91,9 @@ class CosyVoiceApp:
             self.api_manager, self.model_manager, 
             self.path_manager
         )
+        
+        # 确保模型管理器知道初始模型路径
+        self.model_manager.update_model_path(self.path_manager)
 
     def build(self):
         """构建应用UI"""
@@ -124,7 +128,7 @@ class CosyVoiceApp:
         self.page.theme_mode = self.settings_manager.get('theme_mode', 'system')
 
         # 检查是否为移动端
-        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
+        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS,ft.PagePlatform.ANDROID_TV]
         
         if self.is_mobile:
             # 移动端特定配置
@@ -235,6 +239,8 @@ class CosyVoiceApp:
                 "on_logging_change": self.settings_callbacks.settings_on_logging_change,
                 "on_download_model": self.settings_callbacks.settings_on_download_model,
                 "on_open_model_folder": self.settings_callbacks.settings_on_open_model_folder,
+                "on_save_paths": self.settings_callbacks.settings_on_save_paths,
+                "on_reset_paths": self.settings_callbacks.settings_on_reset_paths,  # 添加新的回调
             }
         )
 

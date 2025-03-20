@@ -24,7 +24,7 @@ class HistoryPage(ft.Card):
         self.current_keyword = ""
 
         # 检查是否为移动端
-        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS]
+        self.is_mobile = self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.IOS,ft.PagePlatform.ANDROID_TV]
         
         # 创建搜索框
         self.search_field = ft.TextField(
@@ -135,17 +135,61 @@ class HistoryPage(ft.Card):
             import subprocess
             try:
                 file_path = os.path.abspath(item['file_path'])
+                file_dir = os.path.dirname(file_path)
+                success = False
+                
+                # Android
+                if self.page.platform in [ft.PagePlatform.ANDROID, ft.PagePlatform.ANDROID_TV]:
+                    raise Exception("暂不支持在Android上打开文件位置")
+                                    
+                elif self.page.platform == ft.PagePlatform.IOS:
+                    # iOS平台可能需要专门处理
+                    mlog.warning("iOS平台未实现文件位置打开功能")
+                    raise Exception("暂不支持在iOS上打开文件位置")
+                    
                 # Windows
-                if os.name == 'nt':
+                elif os.name == 'nt':
                     subprocess.run(['explorer', '/select,', file_path])
+                    success = True
                 # macOS
                 elif os.name == 'posix' and os.uname().sysname == 'Darwin':
                     subprocess.run(['open', '-R', file_path])
+                    success = True
                 # Linux
                 elif os.name == 'posix':
-                    subprocess.run(['xdg-open', os.path.dirname(file_path)])
+                    try:
+                        # 尝试多种Linux文件管理器
+                        file_managers = ['xdg-open', 'nautilus', 'thunar', 'dolphin', 'nemo']
+                        for manager in file_managers:
+                            try:
+                                subprocess.run([manager, file_dir], check=True)
+                                success = True
+                                break
+                            except (subprocess.SubprocessError, FileNotFoundError):
+                                continue
+                        
+                        if not success:
+                            raise Exception("未找到可用的文件管理器")
+                    except Exception as linux_ex:
+                        mlog.error(f"Linux打开文件位置失败: {str(linux_ex)}")
+                        raise linux_ex
+                
+                if not success:
+                    raise Exception("无法打开文件位置")
+                    
             except Exception as ex:
                 mlog.error(f"打开文件位置失败: {str(ex)}")
+                # 显示错误提示对话框
+                error_dialog = ft.AlertDialog(
+                    title=ft.Text("打开失败"),
+                    content=ft.Text(f"无法打开文件位置：{str(ex)}\n\n文件路径：{item.get('file_path', '未知')}"),
+                    actions=[
+                        ft.TextButton("确定", 
+                                    on_click=lambda e: (setattr(error_dialog, "open", False), self.page.update()),
+                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)))
+                    ]
+                )
+                self.page.open(error_dialog)
 
         def reuse_parameters(e):
             if "on_reuse" in self.callbacks:
