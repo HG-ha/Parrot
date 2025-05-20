@@ -1,0 +1,5 @@
+flet==0.28.2
+flet-audio==0.1.0
+aiohttp
+py7zr
+websockets
