@@ -117,7 +117,7 @@ class ApiManager:
             if params.get('mode') == "zero_shot":
                 data["speaker"] = params.get('speaker_text', '')
             elif params.get('mode') == "language_control":
-                data["instruction"] = params.get('language_control', '')
+                data["instruction"] = params.get('instruction', '')
                 
             if params.get('prompt'):
                 data["prompt_speech_path"] = params.get('prompt')

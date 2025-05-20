@@ -50,7 +50,7 @@ A multi-role voice cloning project using the `flet` UI framework, based on the `
 
 ### Mode Differences
 1. Quick Inference: Directly use audio for voice generation, with ordinary results
-2. Language Control: Similar to `1`, but supports changing the actual generated language through prompt text
+2. Language Control: Similar to `1`, but supports changing the actual generated language through prompt text, like "请使用四川话读这段话"
 3. Accurate Mode: Very good results, but requires the actual text content of the `Prompt Audio`
 
 ### Running Model API Separately (Model Separation Scenario)
